@@ -16,6 +16,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         :root {
             --bg-dark: #0f172a;
@@ -124,9 +125,25 @@
             transition: all 0.2s;
         }
 
-        input:focus {
+        input:focus,
+        textarea:focus {
             border-color: var(--accent-primary);
             box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+        }
+
+        textarea {
+            background: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            width: 100%;
+            outline: none;
+            transition: all 0.2s;
+            resize: vertical;
+            font-family: 'Inter', sans-serif;
         }
 
         button.btn-add {
@@ -274,6 +291,41 @@
 
         <button class="btn-calculate" onclick="calculate()">Calcular Eficiencia</button>
 
+        <!-- Seccion Cambio de Bobina -->
+        <div class="section" style="margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 30px;">
+            <div class="subtitle" style="margin-bottom: 15px;">CAMBIO DE BOBINA</div>
+            <span class="label">Minutos por Cambio (Escanea o Escribe)</span>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button class="btn-add" style="margin-bottom:0; flex:1; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="document.getElementById('camera-input').click()">
+                    <span>📷</span> Escanear
+                </button>
+                <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handleImageUpload(this)">
+            </div>
+
+            <textarea id="coil-times" rows="2" placeholder="Ej: 8 6 9 7 8" inputmode="decimal"></textarea>
+            <div id="ocr-status" style="font-size:12px; color:var(--accent-secondary); margin-top:5px; min-height:18px; font-weight:bold;"></div>
+
+            <button class="btn-calculate" style="background: linear-gradient(135deg, var(--accent-secondary), #d97706); margin-top: 15px;" onclick="calculateCoil()">
+                Calcular Bobinas
+            </button>
+
+            <div class="results" id="coil-results">
+                <div class="result-item">
+                    <span class="result-label">Total Minutos (B)</span>
+                    <span class="result-value" id="res-coil-b">0</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Nº Bobinas (N)</span>
+                    <span class="result-value" id="res-coil-n">0</span>
+                </div>
+                <div class="efficiency-card" id="coil-eff-card">
+                    <div class="efficiency-label">Eficiencia Cambio</div>
+                    <div class="efficiency-value"><span id="res-coil-eff">0</span>%</div>
+                </div>
+            </div>
+        </div>
+
         <div class="results" id="results">
             <div class="result-item">
                 <span class="result-label">Metros Totales</span>
@@ -346,6 +398,81 @@
             document.getElementById('results').style.display = 'block';
             setTimeout(() => {
                 document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+
+        // --- Logic for Coil Efficiency (OCR) ---
+
+        async function handleImageUpload(input) {
+            if (input.files && input.files[0]) {
+                const img = input.files[0];
+                const statusDiv = document.getElementById('ocr-status');
+                
+                statusDiv.innerText = 'Procesando imagen... (esto puede tardar un poco)';
+                
+                try {
+                    const worker = await Tesseract.createWorker('eng'); // 'eng' works well for digits generally
+                    await worker.setParameters({
+                        tessedit_char_whitelist: '0123456789 '
+                    });
+                    
+                    const ret = await worker.recognize(img);
+                    await worker.terminate();
+
+                    const text = ret.data.text;
+                    console.log('OCR Result:', text);
+                    
+                    // Clean up: Replace newlines with spaces, remove non-digits/spaces
+                    const cleanText = text.replace(/\n/g, ' ').replace(/[^0-9 ]/g, '');
+                    
+                    // Insert into textarea
+                    const existing = document.getElementById('coil-times').value;
+                    const separator = existing.length > 0 ? ' ' : '';
+                    document.getElementById('coil-times').value = existing + separator + cleanText;
+                    
+                    statusDiv.innerText = 'Escaneo completado. Verifica los números.';
+                    
+                    // Auto-focus textarea for correction
+                    setTimeout(() => document.getElementById('coil-times').focus(), 500);
+
+                } catch (err) {
+                    console.error(err);
+                    statusDiv.innerText = 'Error al leer la imagen. Inténtalo de nuevo.';
+                }
+            }
+        }
+
+        function calculateCoil() {
+            const raw = document.getElementById('coil-times').value;
+            // Split by spaces or commas, filter out empty strings
+            const numbers = raw.split(/[\s,]+/).map(n => parseFloat(n)).filter(n => !isNaN(n));
+
+            if (numbers.length === 0) {
+                alert('Por favor, introduce los tiempos de las bobinas (ej: 8 6 9).');
+                return;
+            }
+
+            const B = numbers.reduce((a, b) => a + b, 0); // Suma Total Minutos
+            const N = numbers.length; // Numero de bobinas
+            
+            if (B === 0) return;
+
+            // Formula: (N * 5 * 100) / B
+            const efficiency = (N * 5 * 100) / B;
+            const finalEff = Math.round(efficiency * 100) / 100; // Round to 2 decimal places? User said rounded. Let's do integer or 1 decimal. User example: 66,67.
+
+            document.getElementById('res-coil-b').innerText = B;
+            document.getElementById('res-coil-n').innerText = N;
+            document.getElementById('res-coil-eff').innerText = finalEff.toLocaleString('es-ES', { maximumFractionDigits: 2 });
+
+            const card = document.getElementById('coil-eff-card');
+            if (finalEff >= 100) card.style.background = '#22c55e';
+            else if (finalEff >= 80) card.style.background = '#f59e0b';
+            else card.style.background = '#ef4444';
+
+            document.getElementById('coil-results').style.display = 'block';
+             setTimeout(() => {
+                document.getElementById('coil-results').scrollIntoView({ behavior: 'smooth' });
             }, 100);
         }
     </script>
