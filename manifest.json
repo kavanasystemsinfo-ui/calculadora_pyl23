@@ -1,0 +1,17 @@
+{
+    "name": "Calculadora Eficiencia PYL 23",
+    "short_name": "PYL 23",
+    "description": "Calculadora de eficiencia industrial para operarios.",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#0f172a",
+    "theme_color": "#6366f1",
+    "icons": [
+        {
+            "src": "icon.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        }
+    ]
+}

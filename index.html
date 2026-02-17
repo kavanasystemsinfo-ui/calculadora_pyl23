@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PYL 23 | Eficiencia</title>
+
+    <!-- PWA -->
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="manifest" href="manifest.json">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --accent-primary: #6366f1;
+            --accent-secondary: #f59e0b;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: -1px;
+            color: var(--text-main);
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--accent-secondary);
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Tabs Styles */
+        .tab-nav {
+            display: flex;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 5px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-size: 13px;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .meter-row,
+        .calc-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            animation: slideIn 0.3s ease-out;
+            align-items: center;
+        }
+
+        /* Calculator Specific Styles */
+        .calc-row {
+            background: rgba(15, 23, 42, 0.3);
+            padding: 10px;
+            border-radius: 16px;
+            flex-wrap: wrap;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .calc-input-group {
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .calc-input-group label {
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+            display: block;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        select {
+            background: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 14px 12px;
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            width: 100%;
+            outline: none;
+            transition: all 0.2s;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+
+        select:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+        }
+
+        .c-manual-wrap {
+            margin-top: 6px;
+            display: none;
+        }
+
+        .c-manual-wrap.visible {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        input {
+            background: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            width: 100%;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+        }
+
+        textarea {
+            background: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            width: 100%;
+            outline: none;
+            transition: all 0.2s;
+            resize: vertical;
+            font-family: 'Inter', sans-serif;
+        }
+
+        button.btn-add {
+            background: rgba(99, 102, 241, 0.1);
+            border: 2px dashed #475569;
+            color: var(--accent-primary);
+            padding: 12px;
+            border-radius: 12px;
+            width: 100%;
+            cursor: pointer;
+            font-weight: 700;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+
+        button.btn-add:active {
+            transform: scale(0.98);
+        }
+
+        button.btn-remove {
+            background: #1e293b;
+            color: var(--danger);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .btn-calculate {
+            background: linear-gradient(135deg, var(--accent-primary), #4f46e5);
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 16px;
+            width: 100%;
+            font-size: 18px;
+            font-weight: 900;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+            margin-top: 10px;
+            transition: all 0.2s;
+        }
+
+        .btn-calculate:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        .results {
+            margin-top: 30px;
+            background: rgba(15, 23, 42, 0.5);
+            padding: 20px;
+            border-radius: 20px;
+            display: none;
+        }
+
+        /* Always show results for calculator but empty initially? Or hidden like others. */
+        #calc-results {
+            display: none;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+            padding-top: 15px;
+            margin-top: 5px;
+        }
+
+        .result-label {
+            color: var(--text-dim);
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .result-value {
+            font-size: 20px;
+            font-weight: 900;
+        }
+
+        .calc-total-highlight {
+            color: var(--accent-secondary);
+            font-size: 24px;
+        }
+
+        .efficiency-card {
+            background: var(--accent-secondary);
+            color: #000;
+            padding: 25px;
+            border-radius: 16px;
+            text-align: center;
+            margin-top: 15px;
+            transition: background 0.5s ease;
+        }
+
+        .efficiency-label {
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .efficiency-value {
+            font-size: 56px;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <div class="subtitle">HERRAMIENTAS PYL 23</div>
+            <h1>CONTROL DE PLANTA</h1>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('efficiency')">Eficiencia</button>
+            <button class="tab-btn" onclick="switchTab('calculator')">Calculadora</button>
+        </div>
+
+        <!-- TAB 1: EFFICIENCY (Original) -->
+        <div id="tab-efficiency" class="tab-content active">
+            <div class="section">
+                <span class="label">Metros Fabricados por Orden</span>
+                <div id="meter-inputs">
+                    <div class="meter-row">
+                        <input type="number" step="0.001" placeholder="Metros Orden 1" class="val-input"
+                            inputmode="decimal">
+                    </div>
+                </div>
+                <button class="btn-add" onclick="addRow()">+ Añadir Otra Orden</button>
+            </div>
+
+            <div class="section">
+                <span class="label">Horas Totales Trabajadas (Tiempo Real)</span>
+                <input type="number" id="hours" step="0.01" placeholder="Ej: 7.75" inputmode="decimal">
+            </div>
+
+            <button class="btn-calculate" onclick="calculate()">Calcular Eficiencia</button>
+
+            <!-- Seccion Cambio de Bobina -->
+            <div class="section"
+                style="margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 30px;">
+                <div class="subtitle" style="margin-bottom: 15px;">CAMBIO DE BOBINA</div>
+                <span class="label">Minutos por Cambio (Escanea o Escribe)</span>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button class="btn-add"
+                        style="margin-bottom:0; flex:1; display:flex; align-items:center; justify-content:center; gap:8px;"
+                        onclick="document.getElementById('camera-input').click()">
+                        <span>📷</span> Escanear
+                    </button>
+                    <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;"
+                        onchange="handleImageUpload(this)">
+                </div>
+
+                <textarea id="coil-times" rows="2" placeholder="Ej: 8 6 9 7 8" inputmode="decimal"></textarea>
+                <div id="ocr-status"
+                    style="font-size:12px; color:var(--accent-secondary); margin-top:5px; min-height:18px; font-weight:bold;">
+                </div>
+
+                <button class="btn-calculate"
+                    style="background: linear-gradient(135deg, var(--accent-secondary), #d97706); margin-top: 15px;"
+                    onclick="calculateCoil()">
+                    Calcular Bobinas
+                </button>
+
+                <div class="results" id="coil-results">
+                    <div class="result-item">
+                        <span class="result-label">Total Minutos (B)</span>
+                        <span class="result-value" id="res-coil-b">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Nº Bobinas (N)</span>
+                        <span class="result-value" id="res-coil-n">0</span>
+                    </div>
+                    <div class="efficiency-card" id="coil-eff-card">
+                        <div class="efficiency-label">Eficiencia Cambio</div>
+                        <div class="efficiency-value"><span id="res-coil-eff">0</span>%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="results" id="results">
+                <div class="result-item">
+                    <span class="result-label">Metros Totales</span>
+                    <span class="result-value" id="res-total-m">0.000</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Tiempo Teórico (A)</span>
+                    <span class="result-value" id="res-theo-time">0.00 h</span>
+                </div>
+
+                <div class="efficiency-card" id="eff-card">
+                    <div class="efficiency-label">Eficiencia Final</div>
+                    <div class="efficiency-value"><span id="res-eff">0</span>%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: QUICK CALCULATOR (New) -->
+        <div id="tab-calculator" class="tab-content">
+            <div class="section">
+                <span class="label">Cálculo Rápido de Producción</span>
+                <div id="calc-inputs">
+                    <!-- Dynamic Rows Here -->
+                </div>
+                <!-- Default first row added by JS or HTML -->
+                <button class="btn-add" onclick="addCalcRow()">+ Añadir Medida</button>
+            </div>
+
+            <!-- Shift Hours Selection -->
+            <div class="section" style="margin-top: 15px;">
+                <span class="label">Horas Turno</span>
+                <select id="shift-hours" onchange="calculateQuick()">
+                    <option value="7.75" selected>7.75 h (Estándar)</option>
+                    <option value="7.5">7.50 h</option>
+                    <option value="7.0">7.00 h</option>
+                    <option value="6.5">6.50 h</option>
+                    <option value="6.0">6.00 h</option>
+                    <option value="5.5">5.50 h</option>
+                    <option value="5.0">5.00 h</option>
+                    <option value="4.5">4.50 h</option>
+                    <option value="4.0">4.00 h</option>
+                    <option value="3.5">3.50 h</option>
+                    <option value="3.0">3.00 h</option>
+                    <option value="2.5">2.50 h</option>
+                    <option value="2.0">2.00 h</option>
+                    <option value="1.5">1.50 h</option>
+                    <option value="1.0">1.00 h</option>
+                    <option value="0.5">0.50 h</option>
+                </select>
+            </div>
+
+            <button class="btn-calculate" onclick="calculateQuick()">Calcular Totales</button>
+
+            <div class="results" id="calc-results" style="display:block; margin-top:20px;">
+                <div class="result-item">
+                    <span class="result-label">Total Piezas</span>
+                    <span class="result-value calc-total-highlight" id="total-pieces">0</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Total Metros Lineales</span>
+                    <span class="result-value" id="total-meters">0.00</span>
+                </div>
+
+                <div class="efficiency-card" id="quick-eff-card" style="margin-top:20px; display:none;">
+                    <div class="efficiency-label">Eficiencia Estimada</div>
+                    <div class="efficiency-value"><span id="quick-eff">0</span>%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW Registered', reg))
+                    .catch(err => console.log('SW Error', err));
+            });
+        }
+
+        const THEORETICAL_VELOCITY = 2348;
+
+        // --- Tab Switching Logic ---
+        function switchTab(tabName) {
+            // Hide all contents
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            // Deactivate all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Activate Selected
+            document.getElementById('tab-' + tabName).classList.add('active');
+
+            // Find button that called this (or find by text/index, but simple loop works)
+            // Warning: this simple selector relies on order. 
+            // Better: Add attributes to buttons? Or just use event.currentTarget if passed?
+            // Let's just manually query based on name for robustness locally
+            const buttons = document.querySelectorAll('.tab-btn');
+            if (tabName === 'efficiency') buttons[0].classList.add('active');
+            if (tabName === 'calculator') buttons[1].classList.add('active');
+        }
+
+        // --- Efficiency Logic ---
+        function addRow() {
+            const div = document.createElement('div');
+            div.className = 'meter-row';
+            div.innerHTML = `
+            <input type="number" step="0.001" placeholder="Metros Orden" class="val-input" inputmode="decimal">
+            <button class="btn-remove" onclick="this.parentElement.remove()">×</button>
+        `;
+            document.getElementById('meter-inputs').appendChild(div);
+            div.querySelector('input').focus();
+        }
+
+        function calculate() {
+            const inputs = document.querySelectorAll('.val-input');
+            let totalMeters = 0;
+
+            inputs.forEach(input => {
+                const val = parseFloat(input.value);
+                if (!isNaN(val)) totalMeters += val;
+            });
+
+            const hours = parseFloat(document.getElementById('hours').value);
+
+            if (totalMeters <= 0 || isNaN(hours) || hours <= 0) {
+                alert('Por favor, introduce metros y horas válidas.');
+                return;
+            }
+
+            const theoTime = parseFloat((totalMeters / THEORETICAL_VELOCITY).toFixed(2));
+            const effRatio = parseFloat((theoTime / hours).toFixed(2));
+            const finalEff = Math.round(effRatio * 100);
+
+            document.getElementById('res-total-m').innerText = totalMeters.toLocaleString('es-ES', { minimumFractionDigits: 3 });
+            document.getElementById('res-theo-time').innerText = theoTime.toFixed(2) + ' h';
+            document.getElementById('res-eff').innerText = finalEff;
+
+            const card = document.getElementById('eff-card');
+            if (finalEff >= 100) card.style.background = '#22c55e';
+            else if (finalEff >= 80) card.style.background = '#f59e0b';
+            else card.style.background = '#ef4444';
+
+            document.getElementById('results').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+
+        // --- Coil Efficiency Logic (OCR) ---
+        async function handleImageUpload(input) {
+            if (input.files && input.files[0]) {
+                const img = input.files[0];
+                const statusDiv = document.getElementById('ocr-status');
+
+                statusDiv.innerText = 'Iniciando motor OCR...';
+                statusDiv.style.color = 'var(--accent-secondary)';
+
+                try {
+                    if (typeof Tesseract === 'undefined') {
+                        throw new Error('La librería Tesseract no se ha cargado. Revisa tu conexión.');
+                    }
+
+                    const worker = await Tesseract.createWorker('eng', 1, {
+                        logger: m => {
+                            console.log(m);
+                            if (m.status === 'recognizing text') {
+                                statusDiv.innerText = `Leyendo: ${Math.round(m.progress * 100)}%`;
+                            } else {
+                                statusDiv.innerText = `Estado: ${m.status}`;
+                            }
+                        }
+                    });
+
+                    await worker.setParameters({
+                        tessedit_char_whitelist: '0123456789 '
+                    });
+
+                    const ret = await worker.recognize(img);
+                    await worker.terminate();
+
+                    const text = ret.data.text;
+                    console.log('OCR Result:', text);
+
+                    const cleanText = text.replace(/\n/g, ' ').replace(/[^0-9 ]/g, '');
+
+                    if (!cleanText.trim()) {
+                        statusDiv.innerText = 'No se encontraron números claros.';
+                        statusDiv.style.color = 'var(--danger)';
+                        return;
+                    }
+
+                    const existing = document.getElementById('coil-times').value;
+                    const separator = existing.length > 0 ? ' ' : '';
+                    document.getElementById('coil-times').value = existing + separator + cleanText;
+
+                    statusDiv.innerText = '¡Lectura completada!';
+                    statusDiv.style.color = 'var(--success)';
+
+                    setTimeout(() => document.getElementById('coil-times').focus(), 500);
+
+                } catch (err) {
+                    console.error(err);
+                    statusDiv.innerText = 'Error: ' + (err.message || 'Fallo desconocido');
+                    statusDiv.style.color = 'var(--danger)';
+                    alert('Error OCR: ' + err.message);
+                }
+            }
+        }
+
+        function calculateCoil() {
+            const raw = document.getElementById('coil-times').value;
+            const numbers = raw.split(/[\s,]+/).map(n => parseFloat(n)).filter(n => !isNaN(n));
+
+            if (numbers.length === 0) {
+                alert('Por favor, introduce los tiempos de las bobinas (ej: 8 6 9).');
+                return;
+            }
+
+            const B = numbers.reduce((a, b) => a + b, 0);
+            const N = numbers.length;
+
+            if (B === 0) return;
+
+            const efficiency = (N * 5 * 100) / B;
+            const finalEff = Math.round(efficiency * 100) / 100;
+
+            document.getElementById('res-coil-b').innerText = B;
+            document.getElementById('res-coil-n').innerText = N;
+            document.getElementById('res-coil-eff').innerText = finalEff.toLocaleString('es-ES', { maximumFractionDigits: 2 });
+
+            const card = document.getElementById('coil-eff-card');
+            if (finalEff >= 100) card.style.background = '#22c55e';
+            else if (finalEff >= 80) card.style.background = '#f59e0b';
+            else card.style.background = '#ef4444';
+
+            document.getElementById('coil-results').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('coil-results').scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+
+        // --- Quick Calculator Logic ---
+        const PIEZAS_POR_PALET = 480;
+
+        function addCalcRow() {
+            const div = document.createElement('div');
+            div.className = 'calc-row';
+            div.innerHTML = `
+                <div class="calc-input-group" style="flex:2;">
+                    <label>Medida (mm)</label>
+                    <select class="c-length-select" onchange="handleMedidaChange(this)">
+                        <option value="" disabled selected>Seleccionar...</option>
+                        <option value="2500">2500</option>
+                        <option value="2600">2600</option>
+                        <option value="2700">2700</option>
+                        <option value="2800">2800</option>
+                        <option value="3000">3000</option>
+                        <option value="3100">3100</option>
+                        <option value="3500">3500</option>
+                        <option value="3800">3800</option>
+                        <option value="4000">4000</option>
+                        <option value="4200">4200</option>
+                        <option value="otro">OTRO</option>
+                    </select>
+                    <div class="c-manual-wrap">
+                        <input type="number" class="c-length-manual" placeholder="Medida manual (mm)" inputmode="decimal">
+                    </div>
+                </div>
+                <div class="calc-input-group">
+                    <label>Nº Palets</label>
+                    <input type="number" class="c-pallets" placeholder="1" inputmode="numeric">
+                </div>
+                <button class="btn-remove" onclick="removeCalcRow(this)">×</button>
+            `;
+            document.getElementById('calc-inputs').appendChild(div);
+            div.querySelector('select').focus();
+        }
+
+        function handleMedidaChange(select) {
+            const manualWrap = select.closest('.calc-input-group').querySelector('.c-manual-wrap');
+            if (select.value === 'otro') {
+                manualWrap.classList.add('visible');
+                manualWrap.querySelector('input').focus();
+            } else {
+                manualWrap.classList.remove('visible');
+            }
+        }
+
+        function removeCalcRow(btn) {
+            btn.parentElement.remove();
+            calculateQuick();
+        }
+
+        function getRowLength(row) {
+            const select = row.querySelector('.c-length-select');
+            if (select.value === 'otro') {
+                return parseFloat(row.querySelector('.c-length-manual').value) || 0;
+            }
+            return parseFloat(select.value) || 0;
+        }
+
+        function calculateQuick() {
+            const rows = document.querySelectorAll('.calc-row');
+            let totalPieces = 0;
+            let totalMeters = 0;
+
+            rows.forEach(row => {
+                const length = getRowLength(row);
+                const pallets = parseFloat(row.querySelector('.c-pallets').value) || 0;
+
+                const rowPieces = PIEZAS_POR_PALET * pallets;
+                const rowMeters = (length / 1000) * rowPieces;
+
+                totalPieces += rowPieces;
+                totalMeters += rowMeters;
+            });
+
+            document.getElementById('total-pieces').innerText = totalPieces.toLocaleString('es-ES');
+            document.getElementById('total-meters').innerText = totalMeters.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            // Efficiency Calculation
+            const shiftHours = parseFloat(document.getElementById('shift-hours').value) || 7.75;
+            if (totalMeters > 0 && shiftHours > 0) {
+                const theoTime = parseFloat((totalMeters / THEORETICAL_VELOCITY).toFixed(2));
+                const effRatio = parseFloat((theoTime / shiftHours).toFixed(2));
+                const finalEff = Math.round(effRatio * 100);
+
+                const card = document.getElementById('quick-eff-card');
+                const valParams = document.getElementById('quick-eff');
+
+                valParams.innerText = finalEff;
+                card.style.display = 'block';
+
+                if (finalEff >= 100) card.style.background = '#22c55e';
+                else if (finalEff >= 80) card.style.background = '#f59e0b';
+                else card.style.background = '#ef4444';
+            } else {
+                document.getElementById('quick-eff-card').style.display = 'none';
+            }
+
+            const btn = document.querySelector('#tab-calculator .btn-calculate');
+            const originalText = btn.innerText;
+            btn.innerText = '¡Calculado!';
+            setTimeout(() => btn.innerText = originalText, 1000);
+        }
+
+        // Initialize Calculator with one empty row
+        document.addEventListener('DOMContentLoaded', () => {
+            addCalcRow();
+        });
+
+    </script>
+
+</body>
+
+</html>
