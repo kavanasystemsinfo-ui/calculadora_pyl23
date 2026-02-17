@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const CACHE_NAME = 'pyl-calc-v2';
 const ASSETS = [
     './',
@@ -31,3 +32,25 @@ self.addEventListener('fetch', event => {
         })
     );
 });
+=======
+const CACHE_NAME = 'pyl-calc-v2';
+const ASSETS = [
+    './',
+    './index.html',
+    './manifest.json'
+];
+
+self.addEventListener('install', event => {
+    event.waitUntil(
+        caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
+    );
+});
+
+self.addEventListener('fetch', event => {
+    event.respondWith(
+        caches.match(event.request).then(response => {
+            return response || fetch(event.request);
+        })
+    );
+});
+>>>>>>> 7dbc70956382c490d44424eb916438fe60d41a54
